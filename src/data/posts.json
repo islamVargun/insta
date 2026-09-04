@@ -1,0 +1,42 @@
+[
+  {
+    "id": "1",
+    "image": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=60",
+    "text": "İyilik yapmak, insanın kendi kalbine yaptığı en güzel yatırımdır. Birine tebessüm etmek, birinin yükünü hafifletmek... Bunlar küçük görünse de etkisi çok büyüktür. #iyilik",
+    "category": "İyilik Yapmak",
+    "date": "2023-10-01T12:00:00Z",
+    "url": "https://instagram.com/p/xxx"
+  },
+  {
+    "id": "2",
+    "image": "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&auto=format&fit=crop&q=60",
+    "text": "Dua, kalbin Allah ile konuşmasıdır. Bazen diller susar, kalpler konuşur. İçindeki sıkıntıyı, sevinci ve umudu O'na anlat. #dua",
+    "category": "Dua",
+    "date": "2023-10-05T14:30:00Z",
+    "url": "https://instagram.com/p/yyy"
+  },
+  {
+    "id": "3",
+    "image": "https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?w=800&auto=format&fit=crop&q=60",
+    "text": "Sabır, boyun eğmek değil, mücadele etmektir. Zorlukların ardındaki güzelliği görebilmek, kışın ardından baharın geleceğine inanmaktır. #sabır",
+    "category": "Sabır",
+    "date": "2023-10-10T09:15:00Z",
+    "url": "https://instagram.com/p/zzz"
+  },
+  {
+    "id": "4",
+    "image": "https://images.unsplash.com/photo-1473496169904-658ba9859062?w=800&auto=format&fit=crop&q=60",
+    "text": "Şükür, elindekinin kıymetini bilmektir. Şikayet etmek yerine sahip olduklarına odaklanmak, huzurun anahtarıdır. #şükür",
+    "category": "Şükür",
+    "date": "2023-10-12T16:45:00Z",
+    "url": "https://instagram.com/p/www"
+  },
+  {
+    "id": "5",
+    "image": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&auto=format&fit=crop&q=60",
+    "text": "Başkalarına iyilik yaparken aslında kendi ruhunu beslersin. Beklentisiz yapılan her iyilik, kalbe inen bir huzur damlasıdır. #iyilik",
+    "category": "İyilik Yapmak",
+    "date": "2023-10-15T11:00:00Z",
+    "url": "https://instagram.com/p/vvv"
+  }
+]
