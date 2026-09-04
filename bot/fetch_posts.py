@@ -47,6 +47,15 @@ def main():
     
     L = instaloader.Instaloader(download_pictures=False, download_video_thumbnails=False, download_videos=False, download_geotags=False, download_comments=False)
     
+    ig_user = os.environ.get("IG_USERNAME")
+    ig_pass = os.environ.get("IG_PASSWORD")
+    if ig_user and ig_pass:
+        try:
+            print(f"Bot hesabı ile giriş yapılıyor: {ig_user}")
+            L.login(ig_user, ig_pass)
+        except Exception as e:
+            print(f"Giriş hatası: {e}")
+    
     try:
         profile = instaloader.Profile.from_username(L.context, TARGET_ACCOUNT)
     except Exception as e:
