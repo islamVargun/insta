@@ -7,6 +7,15 @@ function App() {
   const [selectedCategory, setSelectedCategory] = useState('Tümü');
   const [searchQuery, setSearchQuery] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Reset image index when a new post is selected
+  useEffect(() => {
+    if (selectedPost) {
+      setCurrentImageIndex(0);
+    }
+  }, [selectedPost]);
 
   // Initialize data and categories
   useEffect(() => {
@@ -35,6 +44,20 @@ function App() {
     localStorage.setItem('theme', newTheme);
   };
 
+  const nextImage = (e) => {
+    e.stopPropagation();
+    if (selectedPost && selectedPost.images && currentImageIndex < selectedPost.images.length - 1) {
+      setCurrentImageIndex(prev => prev + 1);
+    }
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    if (currentImageIndex > 0) {
+      setCurrentImageIndex(prev => prev - 1);
+    }
+  };
+
   const filteredPosts = posts.filter(post => {
     const matchesCategory = selectedCategory === 'Tümü' || post.category === selectedCategory;
     const matchesSearch = post.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -50,7 +73,7 @@ function App() {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
             </svg>
-            İlham & Bilgi
+            Kuran Blog 
           </h1>
         </div>
         <button onClick={toggleTheme} className="theme-toggle" aria-label="Temayı Değiştir">
@@ -105,9 +128,12 @@ function App() {
                   <p className="card-text">{post.text}</p>
                   
                   <div className="card-actions">
+                    <button className="action-btn" onClick={() => setSelectedPost(post)} title="İçeriği Oku">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                      İçeriği Oku
+                    </button>
                     <button className="action-btn" onClick={() => window.open(post.url, '_blank')} title="Instagram'da gör">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                      Orijinal Post
                     </button>
                     <button className="action-btn" onClick={() => {
                       if (navigator.share) {
@@ -118,7 +144,6 @@ function App() {
                       }
                     }} title="Paylaş">
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                      Paylaş
                     </button>
                   </div>
                 </div>
@@ -131,6 +156,77 @@ function App() {
             </div>
           )}
         </div>
+
+        {selectedPost && (
+          <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <button className="close-btn" onClick={() => setSelectedPost(null)}>×</button>
+              
+              <div className="modal-images-container slider-container">
+                {selectedPost.images && selectedPost.images.length > 0 ? (
+                  <>
+                    {/* Önceki Butonu */}
+                    {currentImageIndex > 0 && (
+                      <button className="slider-btn prev-btn" onClick={prevImage}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                      </button>
+                    )}
+                    
+                    {/* Resim */}
+                    <div className="slider-image-wrapper">
+                      <img 
+                        src={selectedPost.images[currentImageIndex]} 
+                        alt={`${selectedPost.category} ${currentImageIndex+1}`} 
+                        className="slider-image" 
+                      />
+                    </div>
+                    
+                    {/* Sonraki Butonu */}
+                    {currentImageIndex < selectedPost.images.length - 1 && (
+                      <button className="slider-btn next-btn" onClick={nextImage}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                      </button>
+                    )}
+
+                    {/* Noktalar (Sayfalama) */}
+                    {selectedPost.images.length > 1 && (
+                      <div className="slider-dots">
+                        {selectedPost.images.map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`slider-dot ${idx === currentImageIndex ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCurrentImageIndex(idx);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="slider-image-wrapper">
+                    <img src={selectedPost.image} alt={selectedPost.category} className="slider-image" />
+                  </div>
+                )}
+              </div>
+              
+              <div className="modal-text-container">
+                <div className="card-header">
+                  <span className="card-category">{selectedPost.category}</span>
+                </div>
+                <p>{selectedPost.text}</p>
+                <div style={{marginTop: "auto", paddingTop: "2rem"}}>
+                   <button className="action-btn" onClick={() => window.open(selectedPost.url, '_blank')} style={{color: "var(--primary-color)"}}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "8px"}}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
+                      Orijinal Posta Git
+                    </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
       </main>
     </div>
   );

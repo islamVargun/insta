@@ -211,8 +211,20 @@ p {
 /* Grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 2rem;
+}
+
+@media (max-width: 767px) {
+  .grid {
+    gap: 1.5rem;
+  }
+  .container {
+    padding: 1rem;
+  }
+  .header {
+    padding: 1rem;
+  }
 }
 
 /* Card */
@@ -306,4 +318,207 @@ p {
   padding: 4rem 2rem;
   color: var(--text-secondary);
   grid-column: 1 / -1;
+}
+
+/* Modal and Carousel */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 2rem;
+}
+
+.modal-content {
+  background: var(--bg-color);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 768px) {
+  .modal-content {
+    flex-direction: row;
+  }
+}
+
+.close-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+}
+
+.close-btn:hover {
+  background: rgba(0,0,0,0.8);
+}
+
+.modal-images-container {
+  flex: 1;
+  background: #111; /* Resimlerin arkasında biraz daha koyu bir renk */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.slider-image-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.slider-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.slider-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.8);
+  color: #111;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.slider-btn:hover {
+  background: white;
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.prev-btn {
+  left: 1rem;
+}
+
+.next-btn {
+  right: 1rem;
+}
+
+.slider-dots {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 12px;
+  border-radius: 20px;
+}
+
+.slider-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.slider-dot.active {
+  background: white;
+  transform: scale(1.2);
+}
+
+.modal-text-container {
+  width: 100%;
+  padding: 2.5rem;
+  overflow-y: auto;
+  background: var(--bg-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-text-container p {
+  white-space: pre-wrap; /* Satır atlamalarını korumak için */
+}
+
+@media (min-width: 768px) {
+  .modal-text-container {
+    width: 400px; /* Metin alanını biraz genişletelim */
+    border-left: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 767px) {
+  .modal-overlay {
+    padding: 1rem;
+  }
+  
+  .modal-content {
+    max-height: 95vh;
+  }
+  
+  .modal-images-container {
+    flex: 0 0 55%; /* Mobilde yüksekliğin %55'ini resim alsın */
+  }
+  
+  .modal-text-container {
+    flex: 1; /* Kalan kısmı metin alsın */
+    padding: 1.5rem;
+  }
+  
+  .slider-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .slider-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  
+  .close-btn {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 32px;
+    height: 32px;
+    font-size: 1.2rem;
+  }
 }

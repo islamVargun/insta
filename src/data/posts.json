@@ -1,42 +1,100 @@
 [
   {
-    "id": "1",
-    "image": "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?w=800&auto=format&fit=crop&q=60",
-    "text": "İyilik yapmak, insanın kendi kalbine yaptığı en güzel yatırımdır. Birine tebessüm etmek, birinin yükünü hafifletmek... Bunlar küçük görünse de etkisi çok büyüktür. #iyilik",
-    "category": "İyilik Yapmak",
-    "date": "2023-10-01T12:00:00Z",
-    "url": "https://instagram.com/p/xxx"
+    "id": "DcyghZYjY3s",
+    "image": "/images/DcyghZYjY3s_0.jpg",
+    "images": [
+      "/images/DcyghZYjY3s_0.jpg",
+      "/images/DcyghZYjY3s_1.jpg",
+      "/images/DcyghZYjY3s_2.jpg",
+      "/images/DcyghZYjY3s_3.jpg",
+      "/images/DcyghZYjY3s_4.jpg",
+      "/images/DcyghZYjY3s_5.jpg",
+      "/images/DcyghZYjY3s_6.jpg",
+      "/images/DcyghZYjY3s_7.jpg"
+    ],
+    "text": "@teolojikfelsefe1 \n\n#mesnevi #mevlana #islam #bilgi #risaleinur",
+    "category": "Cennet ve Sorgulama",
+    "date": "2026-09-02T14:59:56.000Z",
+    "url": "https://www.instagram.com/p/DcyghZYjY3s/"
   },
   {
-    "id": "2",
-    "image": "https://images.unsplash.com/photo-1499209974431-9dddcece7f88?w=800&auto=format&fit=crop&q=60",
-    "text": "Dua, kalbin Allah ile konuşmasıdır. Bazen diller susar, kalpler konuşur. İçindeki sıkıntıyı, sevinci ve umudu O'na anlat. #dua",
-    "category": "Dua",
-    "date": "2023-10-05T14:30:00Z",
-    "url": "https://instagram.com/p/yyy"
+    "id": "DcEdE9VjU0A",
+    "image": "/images/DcEdE9VjU0A_0.jpg",
+    "images": [
+      "/images/DcEdE9VjU0A_0.jpg",
+      "/images/DcEdE9VjU0A_1.jpg",
+      "/images/DcEdE9VjU0A_2.jpg",
+      "/images/DcEdE9VjU0A_3.jpg",
+      "/images/DcEdE9VjU0A_4.jpg",
+      "/images/DcEdE9VjU0A_5.jpg",
+      "/images/DcEdE9VjU0A_6.jpg",
+      "/images/DcEdE9VjU0A_7.jpg",
+      "/images/DcEdE9VjU0A_8.jpg",
+      "/images/DcEdE9VjU0A_9.jpg",
+      "/images/DcEdE9VjU0A_10.jpg",
+      "/images/DcEdE9VjU0A_11.jpg",
+      "/images/DcEdE9VjU0A_12.jpg"
+    ],
+    "text": "@teolojikfelsefe1 \n\n#mesnevi #mevlana #islam #bilgi #risaleinur",
+    "category": "Şirk ve Şefaat",
+    "date": "2026-08-15T17:44:46.000Z",
+    "url": "https://www.instagram.com/p/DcEdE9VjU0A/"
   },
   {
-    "id": "3",
-    "image": "https://images.unsplash.com/photo-1470240731273-7821a6eeb6bd?w=800&auto=format&fit=crop&q=60",
-    "text": "Sabır, boyun eğmek değil, mücadele etmektir. Zorlukların ardındaki güzelliği görebilmek, kışın ardından baharın geleceğine inanmaktır. #sabır",
-    "category": "Sabır",
-    "date": "2023-10-10T09:15:00Z",
-    "url": "https://instagram.com/p/zzz"
+    "id": "DXMkUAZDIZO",
+    "image": "/images/DXMkUAZDIZO_0.jpg",
+    "images": [
+      "/images/DXMkUAZDIZO_0.jpg",
+      "/images/DXMkUAZDIZO_1.jpg",
+      "/images/DXMkUAZDIZO_2.jpg",
+      "/images/DXMkUAZDIZO_3.jpg",
+      "/images/DXMkUAZDIZO_4.jpg",
+      "/images/DXMkUAZDIZO_5.jpg",
+      "/images/DXMkUAZDIZO_6.jpg"
+    ],
+    "text": "@teolojikfelsefe1 \n\n#mesnevi #mevlana #ibniarabi #bilgi #risaleinur",
+    "category": "Dini Obsesyonlar",
+    "date": "2026-04-16T14:44:57.000Z",
+    "url": "https://www.instagram.com/p/DXMkUAZDIZO/"
   },
   {
-    "id": "4",
-    "image": "https://images.unsplash.com/photo-1473496169904-658ba9859062?w=800&auto=format&fit=crop&q=60",
-    "text": "Şükür, elindekinin kıymetini bilmektir. Şikayet etmek yerine sahip olduklarına odaklanmak, huzurun anahtarıdır. #şükür",
-    "category": "Şükür",
-    "date": "2023-10-12T16:45:00Z",
-    "url": "https://instagram.com/p/www"
+    "id": "DRpeUm-jMSm",
+    "image": "/images/DRpeUm-jMSm_0.jpg",
+    "images": [
+      "/images/DRpeUm-jMSm_0.jpg",
+      "/images/DRpeUm-jMSm_1.jpg",
+      "/images/DRpeUm-jMSm_2.jpg",
+      "/images/DRpeUm-jMSm_3.jpg",
+      "/images/DRpeUm-jMSm_4.jpg",
+      "/images/DRpeUm-jMSm_5.jpg",
+      "/images/DRpeUm-jMSm_6.jpg",
+      "/images/DRpeUm-jMSm_7.jpg",
+      "/images/DRpeUm-jMSm_8.jpg",
+      "/images/DRpeUm-jMSm_9.jpg"
+    ],
+    "text": "@teolojikfelsefe1 \n\n#mesnevi #mevlana #ibniarabi #bilgi #risaleinur #saidnursi #tasavvuf #islam #felsefe #kuranıkerim #kuran #cumhuriyet #şükür #psikoloji #şemsitebrizi",
+    "category": "Mevlana ve Kadın",
+    "date": "2025-11-29T17:02:13.000Z",
+    "url": "https://www.instagram.com/p/DRpeUm-jMSm/"
   },
   {
-    "id": "5",
-    "image": "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=800&auto=format&fit=crop&q=60",
-    "text": "Başkalarına iyilik yaparken aslında kendi ruhunu beslersin. Beklentisiz yapılan her iyilik, kalbe inen bir huzur damlasıdır. #iyilik",
-    "category": "İyilik Yapmak",
-    "date": "2023-10-15T11:00:00Z",
-    "url": "https://instagram.com/p/vvv"
+    "id": "DBy723jutNS",
+    "image": "/images/DBy723jutNS_0.jpg",
+    "images": [
+      "/images/DBy723jutNS_0.jpg",
+      "/images/DBy723jutNS_1.jpg",
+      "/images/DBy723jutNS_2.jpg",
+      "/images/DBy723jutNS_3.jpg",
+      "/images/DBy723jutNS_4.jpg",
+      "/images/DBy723jutNS_5.jpg",
+      "/images/DBy723jutNS_6.jpg",
+      "/images/DBy723jutNS_7.jpg",
+      "/images/DBy723jutNS_8.jpg",
+      "/images/DBy723jutNS_9.jpg"
+    ],
+    "text": "@teolojikfelsefe1 \n\n#filozof #mevlana #ibniarabi #bilgi #risaleinur #saidnursi #tasavvuf #islam #felsefe #kuranıkerim #kuran #cumhuriyet #şükür #psikoloji #şemsitebrizi",
+    "category": "Namaz",
+    "date": "2024-10-31T16:51:09.000Z",
+    "url": "https://www.instagram.com/p/DBy723jutNS/"
   }
 ]
