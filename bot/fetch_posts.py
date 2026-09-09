@@ -1,4 +1,3 @@
-import instaloader
 import json
 import os
 import requests
