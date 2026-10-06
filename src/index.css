@@ -138,9 +138,18 @@ p {
 
 /* Search Bar */
 .search-container {
-  flex: 1;
-  max-width: 400px;
-  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 600px;
+}
+
+@media (min-width: 768px) {
+  .search-container {
+    flex-direction: row;
+    align-items: center;
+  }
 }
 
 .search-input {
@@ -185,7 +194,7 @@ p {
 }
 
 .filter-btn {
-  padding: 0.5rem 1.25rem;
+  padding: 0.75rem 1.25rem;
   border: 1px solid var(--border-color);
   background: var(--surface-color);
   color: var(--text-secondary);
@@ -196,6 +205,10 @@ p {
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .filter-btn:hover {
@@ -226,6 +239,21 @@ p {
   .header {
     padding: 1rem;
   }
+  .page-content {
+    padding: 1.5rem !important;
+    margin: 1rem auto !important;
+  }
+  .page-content h2 {
+    font-size: 2rem !important;
+  }
+}
+
+.page-content {
+  padding: 3rem;
+  border-radius: 16px;
+  max-width: 800px;
+  margin: 2rem auto;
+  min-height: 50vh;
 }
 
 /* Card */
