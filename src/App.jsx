@@ -24,7 +24,7 @@ function App() {
     setPosts(sortedPosts);
 
     // Extract unique categories
-    const uniqueCategories = ['Tümü', ...new Set(sortedPosts.map(post => post.category))];
+    const uniqueCategories = ['Tümü', ...new Set(sortedPosts.flatMap(post => post.categories || [post.category]).filter(Boolean))];
     setCategories(uniqueCategories);
 
     // Check user preference for dark mode
@@ -59,15 +59,16 @@ function App() {
   };
 
   const filteredPosts = posts.filter(post => {
-    const matchesCategory = selectedCategory === 'Tümü' || post.category === selectedCategory;
-    const matchesSearch = post.text.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          post.category.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const searchText = searchQuery.toLocaleLowerCase('tr-TR');
+    
+    if (!searchText) return true;
+    
+    return post.ocr_text && post.ocr_text.toLocaleLowerCase('tr-TR').includes(searchText);
   });
 
   return (
     <div className="app-wrapper">
-      <header className="header glass">
+      <header className="header">
         <div className="logo">
           <h1>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,18 +88,6 @@ function App() {
 
       <main className="container">
         <div className="controls">
-          <div className="filter-bar">
-            {categories.map(category => (
-              <button 
-                key={category} 
-                className={`filter-btn ${selectedCategory === category ? 'active' : ''}`}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
-              </button>
-            ))}
-          </div>
-
           <div className="search-container">
             <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             <input 
@@ -116,12 +105,12 @@ function App() {
             filteredPosts.map(post => (
               <article key={post.id} className="card glass">
                 {post.image && (
-                  <img src={post.image} alt={post.category} className="card-image" loading="lazy" />
+                  <img src={post.image} alt="Kapak Görseli" className="card-image" loading="lazy" />
                 )}
                 <div className="card-content">
                   <div className="card-header">
-                    <span className="card-category">{post.category}</span>
                     <span className="card-date">
+
                       {new Date(post.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </span>
                   </div>
@@ -176,7 +165,7 @@ function App() {
                     <div className="slider-image-wrapper">
                       <img 
                         src={selectedPost.images[currentImageIndex]} 
-                        alt={`${selectedPost.category} ${currentImageIndex+1}`} 
+                        alt="Slider Görseli" 
                         className="slider-image" 
                       />
                     </div>
@@ -206,16 +195,14 @@ function App() {
                   </>
                 ) : (
                   <div className="slider-image-wrapper">
-                    <img src={selectedPost.image} alt={selectedPost.category} className="slider-image" />
+                    <img src={selectedPost.image} alt="Kapak Görseli" className="slider-image" />
                   </div>
                 )}
               </div>
               
               <div className="modal-text-container">
-                <div className="card-header">
-                  <span className="card-category">{selectedPost.category}</span>
-                </div>
                 <p>{selectedPost.text}</p>
+
                 <div style={{marginTop: "auto", paddingTop: "2rem"}}>
                    <button className="action-btn" onClick={() => window.open(selectedPost.url, '_blank')} style={{color: "var(--primary-color)"}}>
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "8px"}}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
@@ -228,6 +215,31 @@ function App() {
         )}
 
       </main>
+
+      <footer className="footer">
+        <div className="footer-content">
+          <div className="footer-section">
+            <h3>Kuran Blog</h3>
+            <p>Din, felsefe, bilim, teoloji ve evren üzerine sorgulamalar.</p>
+          </div>
+          <div className="footer-section">
+            <h3>Hızlı Bağlantılar</h3>
+            <ul>
+              <li><a href="#">Hakkımızda</a></li>
+              <li><a href="#">İletişim</a></li>
+            </ul>
+          </div>
+          <div className="footer-section">
+            <h3>Sosyal Medya</h3>
+            <ul>
+              <li><a href="https://instagram.com/teolojikfelsefe1" target="_blank" rel="noreferrer">Instagram</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className="footer-bottom">
+          <p>&copy; {new Date().getFullYear()} Kuran Blog. Tüm hakları saklıdır.</p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -83,10 +83,11 @@ p {
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  margin-bottom: 2rem;
   position: sticky;
-  top: 1rem;
+  top: 0;
   z-index: 100;
+  background-color: var(--bg-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .logo h1 {
@@ -258,6 +259,12 @@ p {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.card-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .card-category {
@@ -521,4 +528,63 @@ p {
     height: 32px;
     font-size: 1.2rem;
   }
+}
+
+/* Footer */
+.footer {
+  background-color: var(--surface-color);
+  border-top: 1px solid var(--border-color);
+  padding: 4rem 2rem 1.5rem;
+  margin-top: 5rem;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-section h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1.2rem;
+  color: var(--primary-color);
+  font-weight: 700;
+}
+
+.footer-section p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.footer-section ul {
+  list-style: none;
+}
+
+.footer-section ul li {
+  margin-bottom: 0.8rem;
+}
+
+.footer-section ul li a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+  font-size: 1rem;
+}
+
+.footer-section ul li a:hover {
+  color: var(--primary-color);
+}
+
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
