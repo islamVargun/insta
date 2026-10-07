@@ -1,333 +1,392 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback, useDeferredValue, useRef, memo } from 'react';
+import Fuse from 'fuse.js';
 import postsData from './data/posts.json';
 
-function App() {
-  const [posts, setPosts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('Tümü');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+const PAGE_SIZE = 20;
 
-  // New Features States
-  const [visibleCount, setVisibleCount] = useState(20);
+// Sort + precompute lowercase search text once at module load (not on every keystroke)
+const SORTED_POSTS = postsData
+  .map(p => ({ ...p, search: (p.ocr_text || '').toLocaleLowerCase('tr-TR') }))
+  .sort((a, b) => new Date(b.date) - new Date(a.date));
+const POSTS_BY_ID = new Map(SORTED_POSTS.map(p => [String(p.id), p]));
+
+const dateFormatter = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+
+// ---- Hash router: #/ , #/hakkimizda , #/iletisim , #/p/<id> ----
+function parseHash() {
+  const h = window.location.hash.replace(/^#\/?/, '');
+  if (h === 'hakkimizda') return { page: 'about', postId: null };
+  if (h === 'iletisim') return { page: 'contact', postId: null };
+  if (h.startsWith('p/')) return { page: 'home', postId: decodeURIComponent(h.slice(2)) };
+  return { page: 'home', postId: null };
+}
+
+// Number of hash changes since load: lets us safely use history.back() only for in-app navigation
+let inAppNavs = 0;
+
+function useHashRoute() {
+  const [route, setRoute] = useState(parseHash);
+  useEffect(() => {
+    const onChange = () => { inAppNavs++; setRoute(parseHash()); };
+    window.addEventListener('hashchange', onChange);
+    return () => window.removeEventListener('hashchange', onChange);
+  }, []);
+  return route;
+}
+
+const navigate = (path) => {
+  window.location.hash = path;
+};
+
+// ---- Icons ----
+const BookmarkIcon = ({ filled }) => (
+  <svg viewBox="0 0 24 24" fill={filled ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /></svg>
+);
+const InstagramIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><rect x="2" y="2" width="20" height="20" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg>
+);
+const BackIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><line x1="19" y1="12" x2="5" y2="12" /><polyline points="12 19 5 12 12 5" /></svg>
+);
+
+// ---- Card (memoized so typing in search / saving doesn't re-render all cards) ----
+const PostCard = memo(function PostCard({ post, isSaved, onToggleSave, priority }) {
+  const share = async () => {
+    const url = `${window.location.origin}${window.location.pathname}#/p/${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'Kuran Blog', text: post.text?.slice(0, 120), url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        alert('Bağlantı panoya kopyalandı!');
+      }
+    } catch { /* user cancelled */ }
+  };
+
+  return (
+    <article className="card">
+      {post.image && (
+        <a href={`#/p/${post.id}`} className="card-image-link" aria-label="İçeriği oku">
+          <img
+            src={post.thumb || post.image}
+            alt="Kapak Görseli"
+            className="card-image"
+            width="480"
+            height="600"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            decoding="async"
+          />
+        </a>
+      )}
+      <div className="card-content">
+        <div className="card-header">
+          <span className="card-date">{dateFormatter.format(new Date(post.date))}</span>
+          <button
+            className={`action-btn ${isSaved ? 'saved' : ''}`}
+            onClick={() => onToggleSave(post.id)}
+            title={isSaved ? 'Kaydedilenlerden Çıkar' : 'Kaydet'}
+            aria-pressed={isSaved}
+          >
+            <BookmarkIcon filled={isSaved} />
+          </button>
+        </div>
+        <p className="card-text">{post.text}</p>
+
+        <div className="card-actions">
+          <a className="action-btn" href={`#/p/${post.id}`} title="İçeriği Oku">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
+            İçeriği Oku
+          </a>
+          <a className="action-btn" href={post.url} target="_blank" rel="noreferrer" title="Instagram'da gör">
+            <InstagramIcon />
+          </a>
+          <button className="action-btn" onClick={share} title="Paylaş">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" /></svg>
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+});
+
+// ---- Post modal with swipe, keyboard, preloading ----
+function PostModal({ post, onClose }) {
+  const images = useMemo(() => (post.images?.length ? post.images : [post.image]), [post]);
+  const [index, setIndex] = useState(0);
   const [isZoomed, setIsZoomed] = useState(false);
-  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'about', 'contact'
+  const touchStartX = useRef(null);
+
+  const go = useCallback((dir) => {
+    setIndex(i => Math.min(images.length - 1, Math.max(0, i + dir)));
+    setIsZoomed(false);
+  }, [images.length]);
+
+  // Keyboard + body scroll lock
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight') go(1);
+      else if (e.key === 'ArrowLeft') go(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [go, onClose]);
+
+  // Preload neighbour images so slide changes are instant
+  useEffect(() => {
+    [index + 1, index - 1].forEach(i => {
+      if (images[i]) { const im = new Image(); im.src = images[i]; }
+    });
+  }, [index, images]);
+
+  const onTouchStart = (e) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current === null || isZoomed) return;
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+    touchStartX.current = null;
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <button className="close-btn" onClick={onClose} aria-label="Kapat">×</button>
+
+        <div className="modal-images-container" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+          {index > 0 && (
+            <button className="slider-btn prev-btn" onClick={() => go(-1)} aria-label="Önceki">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          )}
+
+          <div className={`slider-image-wrapper ${isZoomed ? 'zoomed' : ''}`} onClick={() => setIsZoomed(z => !z)}>
+            <img key={images[index]} src={images[index]} alt={`Görsel ${index + 1}`} className="slider-image" decoding="async" />
+          </div>
+
+          {index < images.length - 1 && (
+            <button className="slider-btn next-btn" onClick={() => go(1)} aria-label="Sonraki">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+            </button>
+          )}
+
+          {images.length > 1 && (
+            <div className="slider-counter">{index + 1} / {images.length}</div>
+          )}
+        </div>
+
+        <div className="modal-text-container">
+          <p>{post.text}</p>
+          <div style={{ marginTop: 'auto', paddingTop: '2rem' }}>
+            <a className="action-btn" href={post.url} target="_blank" rel="noreferrer" style={{ color: 'var(--primary-color)' }}>
+              <InstagramIcon />
+              Orijinal Posta Git
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StaticPage({ title, children }) {
+  return (
+    <div className="page-content">
+      <a className="back-btn" href="#/">
+        <BackIcon />
+        Geri Dön
+      </a>
+      <h2>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+function App() {
+  const { page, postId } = useHashRoute();
+  const [searchQuery, setSearchQuery] = useState('');
+  const deferredQuery = useDeferredValue(searchQuery);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.documentElement.getAttribute('data-theme') === 'dark');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showSavedOnly, setShowSavedOnly] = useState(false);
   const [savedPosts, setSavedPosts] = useState(() => {
-    const saved = localStorage.getItem('savedPosts');
-    return saved ? JSON.parse(saved) : [];
+    try { return JSON.parse(localStorage.getItem('savedPosts')) || []; } catch { return []; }
   });
+  const sentinelRef = useRef(null);
 
-  // Save bookmarks to local storage
+  const savedSet = useMemo(() => new Set(savedPosts), [savedPosts]);
+  const selectedPost = postId ? POSTS_BY_ID.get(postId) : null;
+
   useEffect(() => {
     localStorage.setItem('savedPosts', JSON.stringify(savedPosts));
   }, [savedPosts]);
 
-  // Reset image index when a new post is selected
+  // Scroll to top when switching static pages
   useEffect(() => {
-    if (selectedPost) {
-      setCurrentImageIndex(0);
-      setIsZoomed(false);
-    }
-  }, [selectedPost]);
+    if (page !== 'home') window.scrollTo(0, 0);
+  }, [page]);
 
-  // Initialize data and categories
-  useEffect(() => {
-    // Sort posts by date (newest first)
-    const sortedPosts = [...postsData].sort((a, b) => new Date(b.date) - new Date(a.date));
-    setPosts(sortedPosts);
-
-    // Extract unique categories
-    const uniqueCategories = ['Tümü', ...new Set(sortedPosts.flatMap(post => post.categories || [post.category]).filter(Boolean))];
-    setCategories(uniqueCategories);
-
-    // Check user preference for dark mode
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-      setIsDarkMode(true);
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
+  // Pagination is reset directly in the search / saved-filter handlers (avoids an extra render)
 
   const toggleTheme = () => {
-    const newTheme = !isDarkMode ? 'dark' : 'light';
+    const next = isDarkMode ? 'light' : 'dark';
     setIsDarkMode(!isDarkMode);
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
   };
 
-  const nextImage = (e) => {
-    e.stopPropagation();
-    if (selectedPost && selectedPost.images && currentImageIndex < selectedPost.images.length - 1) {
-      setCurrentImageIndex(prev => prev + 1);
-      setIsZoomed(false);
-    }
-  };
+  const toggleSavePost = useCallback((id) => {
+    setSavedPosts(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+  }, []);
 
-  const prevImage = (e) => {
-    e.stopPropagation();
-    if (currentImageIndex > 0) {
-      setCurrentImageIndex(prev => prev - 1);
-      setIsZoomed(false);
-    }
-  };
+  const closeModal = useCallback(() => {
+    // Opened from inside the app -> go back (keeps history clean, restores scroll).
+    // Opened via a shared deep link -> just route home instead of leaving the site.
+    if (inAppNavs > 0) window.history.back();
+    else navigate('/');
+  }, []);
 
-  const toggleSavePost = (e, postId) => {
-    e.stopPropagation();
-    setSavedPosts(prev => {
-      if (prev.includes(postId)) return prev.filter(id => id !== postId);
-      return [...prev, postId];
-    });
-  };
+  const fuse = useMemo(() => new Fuse(SORTED_POSTS, {
+    keys: ['search', 'ocr_text'],
+    threshold: 0.3,
+    ignoreLocation: true
+  }), []);
 
-  const filteredPosts = posts.filter(post => {
-    if (showSavedOnly && !savedPosts.includes(post.id)) return false;
+  const filteredPosts = useMemo(() => {
+    const q = deferredQuery.trim().toLocaleLowerCase('tr-TR');
     
-    const searchText = searchQuery.toLocaleLowerCase('tr-TR');
-    if (!searchText) return true;
-    return post.ocr_text && post.ocr_text.toLocaleLowerCase('tr-TR').includes(searchText);
-  });
+    // First apply saved filter if needed
+    let baseData = SORTED_POSTS;
+    if (showSavedOnly) {
+      baseData = SORTED_POSTS.filter(p => savedSet.has(p.id));
+    }
+    
+    if (!q) return baseData;
+    
+    // If fuzzy search, we need to create a new Fuse instance for the filtered subset 
+    // or just search in all and then filter. Searching in all and filtering is easier.
+    const results = fuse.search(q).map(result => result.item);
+    if (showSavedOnly) {
+      return results.filter(p => savedSet.has(p.id));
+    }
+    return results;
+  }, [deferredQuery, showSavedOnly, savedSet, fuse]);
 
   const currentPosts = filteredPosts.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredPosts.length;
+
+  // Infinite scroll: load next page when the sentinel approaches the viewport
+  useEffect(() => {
+    if (page !== 'home' || !hasMore || !sentinelRef.current) return;
+    const obs = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting) setVisibleCount(c => c + PAGE_SIZE); },
+      { rootMargin: '600px' }
+    );
+    obs.observe(sentinelRef.current);
+    return () => obs.disconnect();
+  }, [page, hasMore, currentPosts.length]);
 
   return (
     <div className="app-wrapper">
       <header className="header">
-        <div className="logo" onClick={() => setCurrentPage('home')} style={{ cursor: 'pointer' }}>
+        <a className="logo" href="#/">
           <h1>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/>
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
             </svg>
-            Kuran Blog 
+            Kuran Blog
           </h1>
-        </div>
+        </a>
         <button onClick={toggleTheme} className="theme-toggle" aria-label="Temayı Değiştir">
           {isDarkMode ? (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="4.22" x2="19.78" y2="5.64"></line></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="4.22" x2="19.78" y2="5.64" /></svg>
           ) : (
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
           )}
         </button>
       </header>
 
       <main className="container">
-        {currentPage === 'home' && (
-          <>
-            <div className="controls">
-              <div className="search-container">
-                <div style={{ position: 'relative', flex: 1, width: '100%' }}>
-                  <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                  <input 
-                    type="text" 
-                    className="search-input" 
-                    placeholder="Gönderilerde ara..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <button 
-                  className={`filter-btn ${showSavedOnly ? 'active' : ''}`} 
-                  onClick={() => { setShowSavedOnly(!showSavedOnly); setVisibleCount(20); }}
-                  title="Kaydedilenler"
-                >
-                  <svg viewBox="0 0 24 24" fill={showSavedOnly ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                  {showSavedOnly ? "Tümünü Gör" : "Kaydedilenler"}
-                </button>
+        {/* Home stays mounted (hidden) so returning from other pages is instant and keeps scroll/search state */}
+        <div hidden={page !== 'home'}>
+          <div className="controls">
+            <div className="search-container">
+              <div className="search-field">
+                <svg className="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input
+                  type="search"
+                  className="search-input"
+                  placeholder="Gönderilerde ara..."
+                  value={searchQuery}
+                  onChange={(e) => { setSearchQuery(e.target.value); setVisibleCount(PAGE_SIZE); }}
+                  enterKeyHint="search"
+                />
               </div>
+              <button
+                className={`filter-btn ${showSavedOnly ? 'active' : ''}`}
+                onClick={() => { setShowSavedOnly(s => !s); setVisibleCount(PAGE_SIZE); }}
+                title="Kaydedilenler"
+              >
+                <BookmarkIcon filled={showSavedOnly} />
+                {showSavedOnly ? 'Tümünü Gör' : `Kaydedilenler${savedPosts.length ? ` (${savedPosts.length})` : ''}`}
+              </button>
             </div>
+            <span className="result-count">{filteredPosts.length} gönderi</span>
+          </div>
 
-            <div className="grid">
-          {currentPosts.length > 0 ? (
-            currentPosts.map(post => (
-              <article key={post.id} className="card glass">
-                {post.image && (
-                  <img src={post.image} alt="Kapak Görseli" className="card-image" loading="lazy" />
-                )}
-                <div className="card-content">
-                  <div className="card-header">
-                    <span className="card-date">
-                      {new Date(post.date).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}
-                    </span>
-                    <button 
-                      className="action-btn" 
-                      onClick={(e) => toggleSavePost(e, post.id)} 
-                      title={savedPosts.includes(post.id) ? "Kaydedilenlerden Çıkar" : "Kaydet"}
-                    >
-                      <svg viewBox="0 0 24 24" fill={savedPosts.includes(post.id) ? "var(--primary-color)" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
-                    </button>
-                  </div>
-                  <p className="card-text">{post.text}</p>
-                  
-                  <div className="card-actions">
-                    <button className="action-btn" onClick={() => setSelectedPost(post)} title="İçeriği Oku">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-                      İçeriği Oku
-                    </button>
-                    <button className="action-btn" onClick={() => window.open(post.url, '_blank')} title="Instagram'da gör">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                    </button>
-                    <button className="action-btn" onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({title: 'Kuran Blog', text: post.text, url: window.location.href});
-                      } else {
-                        navigator.clipboard.writeText(post.text);
-                        alert('Metin panoya kopyalandı!');
-                      }
-                    }} title="Paylaş">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))
-          ) : (
-            <div className="empty-state">
-              <h3>Sonuç bulunamadı</h3>
-              <p>Arama terimini değiştirin veya kaydedilenler filtrenizi kaldırın.</p>
+          <div className="grid">
+            {currentPosts.length > 0 ? (
+              currentPosts.map((post, i) => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  isSaved={savedSet.has(post.id)}
+                  onToggleSave={toggleSavePost}
+                  priority={i < 3}
+                />
+              ))
+            ) : (
+              <div className="empty-state">
+                <h3>Sonuç bulunamadı</h3>
+                <p>Arama terimini değiştirin veya kaydedilenler filtrenizi kaldırın.</p>
+              </div>
+            )}
+          </div>
+
+          {hasMore && (
+            <div ref={sentinelRef} className="load-more" aria-live="polite">
+              <button className="filter-btn active" onClick={() => setVisibleCount(c => c + PAGE_SIZE)} aria-label="Daha fazla gönderi yükle">
+                Daha Fazla Yükle
+              </button>
             </div>
           )}
         </div>
 
-        {visibleCount < filteredPosts.length && (
-          <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-            <button 
-              className="filter-btn active" 
-              onClick={() => setVisibleCount(prev => prev + 20)}
-              style={{ padding: '0.75rem 2rem', fontSize: '1.1rem' }}
-            >
-              Daha Fazla Yükle
-            </button>
-          </div>
+        {page === 'about' && (
+          <StaticPage title="Hakkımızda">
+            <p>Kuran Blog, hakikati arama yolculuğunda din, felsefe, bilim ve teoloji gibi alanlarda derinlemesine sorgulamalar yapan bağımsız bir platformdur.</p>
+            <p>Amacımız; aklı ve bilimi rehber edinerek kalıplaşmış dogmalardan uzak, Kuran merkezli yenilikçi bir bakış açısı sunmaktır.</p>
+            <p>Burada yer alan yazılar, düşünmeye ve sorgulamaya davet niteliğindedir.</p>
+          </StaticPage>
         )}
 
-          </>
+        {page === 'contact' && (
+          <StaticPage title="İletişim">
+            <p>Görüş, öneri veya sorularınız için bizimle aşağıdaki kanallardan iletişime geçebilirsiniz. Fikirleriniz bizim için değerlidir.</p>
+            <a href="https://instagram.com/teolojikfelsefe1" target="_blank" rel="noreferrer" className="filter-btn active contact-btn">
+              <InstagramIcon />
+              Instagram'dan Bize Ulaşın
+            </a>
+          </StaticPage>
         )}
-
-        {selectedPost && (
-          <div className="modal-overlay" onClick={() => setSelectedPost(null)}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <button className="close-btn" onClick={() => setSelectedPost(null)}>×</button>
-              
-              <div className="modal-images-container slider-container">
-                {selectedPost.images && selectedPost.images.length > 0 ? (
-                  <>
-                    {/* Önceki Butonu */}
-                    {currentImageIndex > 0 && (
-                      <button className="slider-btn prev-btn" onClick={prevImage}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                      </button>
-                    )}
-                    
-                    {/* Resim */}
-                    <div className="slider-image-wrapper" onClick={() => setIsZoomed(!isZoomed)} style={{ cursor: 'zoom-in' }}>
-                      <img 
-                        src={selectedPost.images[currentImageIndex]} 
-                        alt="Slider Görseli" 
-                        className="slider-image" 
-                        style={isZoomed ? { transform: 'scale(1.5)', transition: 'transform 0.3s ease', zIndex: 50, cursor: 'zoom-out' } : { transition: 'transform 0.3s ease' }}
-                      />
-                    </div>
-                    
-                    {/* Sonraki Butonu */}
-                    {currentImageIndex < selectedPost.images.length - 1 && (
-                      <button className="slider-btn next-btn" onClick={nextImage}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-                      </button>
-                    )}
-
-                    {/* Noktalar (Sayfalama) */}
-                    {selectedPost.images.length > 1 && (
-                      <div className="slider-dots">
-                        {selectedPost.images.map((_, idx) => (
-                          <div 
-                            key={idx} 
-                            className={`slider-dot ${idx === currentImageIndex ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setCurrentImageIndex(idx);
-                            }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="slider-image-wrapper" onClick={() => setIsZoomed(!isZoomed)} style={{ cursor: 'zoom-in' }}>
-                    <img 
-                      src={selectedPost.image} 
-                      alt="Kapak Görseli" 
-                      className="slider-image" 
-                      style={isZoomed ? { transform: 'scale(1.5)', transition: 'transform 0.3s ease', zIndex: 50, cursor: 'zoom-out' } : { transition: 'transform 0.3s ease' }}
-                    />
-                  </div>
-                )}
-              </div>
-              
-              <div className="modal-text-container">
-                <p>{selectedPost.text}</p>
-
-                <div style={{marginTop: "auto", paddingTop: "2rem"}}>
-                   <button className="action-btn" onClick={() => window.open(selectedPost.url, '_blank')} style={{color: "var(--primary-color)"}}>
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{marginRight: "8px"}}><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                      Orijinal Posta Git
-                    </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {currentPage === 'about' && (
-          <div className="page-content glass">
-            <button 
-              className="action-btn" 
-              onClick={() => setCurrentPage('home')}
-              style={{ marginBottom: '2rem', padding: '0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '8px' }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-              Geri Dön
-            </button>
-            <h2 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem', fontSize: '2.5rem' }}>Hakkımızda</h2>
-            <p style={{ marginBottom: '1.2rem', fontSize: '1.1rem', lineHeight: '1.8' }}>
-              Kuran Blog, hakikati arama yolculuğunda din, felsefe, bilim ve teoloji gibi alanlarda derinlemesine sorgulamalar yapan bağımsız bir platformdur.
-            </p>
-            <p style={{ marginBottom: '1.2rem', fontSize: '1.1rem', lineHeight: '1.8' }}>
-              Amacımız; aklı ve bilimi rehber edinerek kalıplaşmış dogmalardan uzak, Kuran merkezli yenilikçi bir bakış açısı sunmaktır.
-            </p>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.8' }}>
-              Burada yer alan yazılar, düşünmeye ve sorgulamaya davet niteliğindedir.
-            </p>
-          </div>
-        )}
-
-        {currentPage === 'contact' && (
-          <div className="page-content glass">
-            <button 
-              className="action-btn" 
-              onClick={() => setCurrentPage('home')}
-              style={{ marginBottom: '2rem', padding: '0.5rem 1rem', border: '1px solid var(--border-color)', borderRadius: '8px' }}
-            >
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
-              Geri Dön
-            </button>
-            <h2 style={{ color: 'var(--primary-color)', marginBottom: '1.5rem', fontSize: '2.5rem' }}>İletişim</h2>
-            <p style={{ marginBottom: '2rem', fontSize: '1.1rem', lineHeight: '1.8' }}>
-              Görüş, öneri veya sorularınız için bizimle aşağıdaki kanallardan iletişime geçebilirsiniz. Fikirleriniz bizim için değerlidir.
-            </p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxWidth: '300px' }}>
-              <a href="https://instagram.com/teolojikfelsefe1" target="_blank" rel="noreferrer" className="filter-btn active" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', padding: '1rem', fontSize: '1.1rem', textDecoration: 'none' }}>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg>
-                Instagram'dan Bize Ulaşın
-              </a>
-            </div>
-          </div>
-        )}
-
       </main>
+
+      {selectedPost && <PostModal post={selectedPost} onClose={closeModal} />}
 
       <footer className="footer">
         <div className="footer-content">
@@ -338,14 +397,8 @@ function App() {
           <div className="footer-section">
             <h3>Hızlı Bağlantılar</h3>
             <ul>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage('about'); window.scrollTo(0,0); }}>Hakkımızda</a></li>
-              <li><a href="#" onClick={(e) => { e.preventDefault(); setCurrentPage('contact'); window.scrollTo(0,0); }}>İletişim</a></li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h3>Sosyal Medya</h3>
-            <ul>
-              <li><a href="https://instagram.com/teolojikfelsefe1" target="_blank" rel="noreferrer">Instagram</a></li>
+              <li><a href="#/hakkimizda">Hakkımızda</a></li>
+              <li><a href="#/iletisim">İletişim</a></li>
             </ul>
           </div>
         </div>

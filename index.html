@@ -1,13 +1,49 @@
 <!doctype html>
-<html lang="en">
+<html lang="tr">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kuran Blog | Din, Felsefe ve Bilim</title>
-    <meta name="description" content="Kuran, felsefe, bilim, teoloji ve evren üzerine sorgulamalar. " />
+    <meta name="description" content="Kuran, felsefe, bilim, teoloji ve evren üzerine sorgulamalar. Hakikate bir adım daha yaklaşmak için tasarlanmış bağımsız okuma platformu." />
     <meta name="keywords" content="kuran, felsefe, bilim, din, teoloji, sorgulama, islam" />
     <meta name="author" content="teolojikfelsefe1" />
+    <meta name="theme-color" content="#f4f9f4" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121a14" media="(prefers-color-scheme: dark)" />
+
+    <!-- Open Graph / sosyal medya paylaşım önizlemesi -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content="Kuran Blog" />
+    <meta property="og:title" content="Kuran Blog | Din, Felsefe ve Bilim" />
+    <meta property="og:description" content="Kuran, felsefe, bilim, teoloji ve evren üzerine sorgulamalar." />
+    <meta name="twitter:card" content="summary" />
+
+    <!-- Google tag (gtag.js) Placeholder - Lütfen G-XXXXXXXXXX kısmını kendi kodunuzla değiştirin -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+
+    <!-- Fonts: preconnect + non-render-blocking stylesheet (was a blocking CSS @import) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" />
+
+    <!-- Apply saved theme before first paint to avoid a light/dark flash -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>
